@@ -45,31 +45,46 @@ $app->post('/customers/new', function(Request $request, Response $response){
     //$status = $request->getParam('status');
 
     try {
-        // Before execute the query on database, prepare statement by binding parameters (:param)
-        $insertQuery = "INSERT INTO customers (dni, id_reg, id_com, email, name, last_name, address, date_reg) 
-                VALUES (:dni, :id_reg, :id_com, :email, :name, :last_name, :address, :date_reg)";
-        
         $dbObj = new apiDB();// Creates an instance of DB class
-        $dbObj = $dbObj->connectToDB();
-        $result = $dbObj->prepare($insertQuery);// Prepares the query string to be executed
-        
-        // bindParam function validates user input (API request in this case) before sending it to the DB.
-        $result->bindParam(':dni', $dni);
-        $result->bindParam(':id_reg', $idReg);
-        $result->bindParam(':id_com', $idCom);
-        $result->bindParam(':email', $email);
-        $result->bindParam(':name', $name);
-        $result->bindParam(':last_name', $lastName);
-        $result->bindParam(':address', $address);
-        $result->bindParam(':date_reg', $dateReg);
-        
-        $result->execute();// Executes the validated query on the database;
+        $dbObj = $dbObj->connectToDB();// Makes the connection through function
 
-        echo json_encode("The customer has been saved.");
-        
-        // Resets the variables and close the connection to database
-        $result = null;
-        $dbObj = null;
+        // Validates the FK's of communes and regions received in the requet data
+        $validationQuery = "SELECT * FROM communes 
+                INNER JOIN regions ON communes.id_reg = regions.id_reg
+                WHERE communes.id_com = '$idCom' AND communes.id_reg = '$idReg';";// Union query to verify that exists a commune with the given ids and the association with a region
+        $validationComReg = $dbObj->query($validationQuery);// Executes query string to bring the data
+
+        if ($validationComReg->rowCount() > 0){
+            
+            // Before execute the query on database, prepare statement by binding parameters (:param)
+            $insertQuery = "INSERT INTO customers (dni, id_reg, id_com, email, name, last_name, address, date_reg) 
+                    VALUES (:dni, :id_reg, :id_com, :email, :name, :last_name, :address, :date_reg)";
+
+            $result = $dbObj->prepare($insertQuery);// Prepares the query string to be executed
+
+            // bindParam function validates user input (API request in this case) before sending it to the DB.
+            $result->bindParam(':dni', $dni);
+            $result->bindParam(':id_reg', $idReg);
+            $result->bindParam(':id_com', $idCom);
+            $result->bindParam(':email', $email);
+            $result->bindParam(':name', $name);
+            $result->bindParam(':last_name', $lastName);
+            $result->bindParam(':address', $address);
+            $result->bindParam(':date_reg', $dateReg);
+
+            $result->execute();// Executes the validated query on the database;
+
+            echo json_encode("The customer has been saved.");
+
+            // Resets the variables and close the connection to database
+            $validationComReg = null;
+            $result = null;
+            $dbObj = null;
+
+        }
+        else {
+            echo "The given id_reg and id_com values don't match with some registered Region and Commune.";
+        }
     }
     catch(PDOException $err){
         error_log('Register Customer PDOException - ' . $err->getMessage(), 0);// Sends the error message to the server log file
