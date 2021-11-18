@@ -91,6 +91,8 @@ $app->post('/customers/search', function(Request $request, Response $response){
                 LEFT JOIN regions reg ON reg.id_reg = cus.id_reg
                 LEFT JOIN communes com ON com.id_com = cus.id_com ";
 
+        $result = "";// Declares the var outside the conditionals to can access it later
+
         if ($dni != "" && $email != ""){
             $selectQuery .= " WHERE cus.dni = :dni AND cus.email = :email AND cus.status = 'A';";// Before execute the query on database, prepare statement by binding parameters (:param)
             $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
@@ -98,65 +100,35 @@ $app->post('/customers/search', function(Request $request, Response $response){
             // bindParam function validates user input (API request in this case) before sending it to the DB.
             $result->bindParam(':dni', $dni);
             $result->bindParam(':email', $email);
-
-            $result->execute();// Executes the select query on the database
-
-            if ($result->rowCount() > 0){
-                $customer = $result->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
-                echo json_encode($customer);// Returns the requested data
-                echo json_encode(array("success" => "true"));
-            }
-            else {
-                echo json_encode(array("message" => "No customer found.", "success" => "false"));
-            }
-
-            // Resets the variables and close the connection to database
-            $result = null;
-            $dbObj = null;
         }
         else if ($dni != "" && $email == ""){
             $selectQuery .= " WHERE cus.dni = :dni AND cus.status = 'A';";// Before execute the query on database, prepare statement by binding parameters (:param)
             $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
             $result->bindParam(':dni', $dni);// bindParam function validates user input (API request in this case) before sending it to the DB.
-
-            $result->execute();// Executes the select query on the database
-
-            if ($result->rowCount() > 0){
-                $customer = $result->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
-                echo json_encode($customer);// Returns the requested data
-                echo json_encode(array("success" => "true"));
-            }
-            else {
-                echo json_encode(array("message" => "No customer found.", "success" => "false"));
-            }
-
-            // Resets the variables and close the connection to database
-            $result = null;
-            $dbObj = null;
         }
         else if ($email != "" && $dni == ""){
             $selectQuery .= " WHERE cus.email = :email AND cus.status = 'A';";// Before execute the query on database, prepare statement by binding parameters (:param)
             $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
             $result->bindParam(':email', $email);// bindParam function validates user input (API request in this case) before sending it to the DB.
-
-            $result->execute();// Executes the select query on the database
-
-            if ($result->rowCount() > 0){
-                $customer = $result->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
-                echo json_encode($customer);// Returns the requested data
-                echo json_encode(array("success" => "true"));
-            }
-            else {
-                echo json_encode(array("message" => "No customer found.", "success" => "false"));
-            }
-
-            // Resets the variables and close the connection to database
-            $result = null;
-            $dbObj = null;
         }
         else {
-            echo "Not enough params to make the Customer search. DNI or email required";
+            echo json_encode(array("message" => "Not enough params to make the Customer search. DNI or email required.", "success" => "false"));
         }
+
+        
+        $result->execute();// Executes the select query on the database
+        if ($result->rowCount() > 0){
+            $customer = $result->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
+            echo json_encode($customer);// Returns the requested data
+            echo json_encode(array("success" => "true"));
+        }
+        else {
+            echo json_encode(array("message" => "No customer found.", "success" => "false"));
+        }
+
+        // Resets the variables and close the connection to database
+        $result = null;
+        $dbObj = null;
     }
     catch(PDOException $err){
         error_log('Register Customer PDOException - ' . $err->getMessage(), 0);// Sends the error message to the server log file
