@@ -1,18 +1,24 @@
 # GDALab practice API
-Here's a little documentation to be able to run this Restful API.
-</br>
+Here's a little documentation to be able to run this Restful API. </br>
+
 Used technologies:
  - **PHP** (v 7.1.1)
  - **Slim** framework (v 3)
  - **MySQL**
  - **Apache** web server
 
-#### 1) Configure a local environment for run the API (Linux OS distributions)
- - Download XAMPP for Linux, with PHP version 7.1.1 from this link: </br>
+System requirements:
+ - Linux OS distro (Fedora, Ubuntu, Debian, etc.)
+ - XAMPP for Linux (LAMPP)
+
+----
+
+#### 1) Configuring a local environment for run the API (Linux OS distributions)
+ - Download and install XAMPP for Linux (follow the instructions based on your SO distro), with PHP version 7.1.1 from this link: </br>
 https://sourceforge.net/projects/xampp/files/XAMPP%20Linux/7.1.1/
 
- - Set the path and variables to access XAMPP bundle globally: </br>
-`gedit ~/.bashrc or nano ~/.bashrc`
+ - With XAMPP already installed, set the path and variables to access XAMPP bundle globally: </br>
+`gedit ~/.bashrc` or `nano ~/.bashrc`
 
  - Edit the .bashrc file and add this line: </br>
  → export PATH="$PATH:/opt/lampp/bin"
@@ -34,6 +40,10 @@ https://sourceforge.net/projects/xampp/files/XAMPP%20Linux/7.1.1/
 
  - Change htdocs folder permission: </br>
 `sudo chmod 777 -R /opt/lampp/htdocs`
+ - Start XAMPP and after enable the MySQL and Apache services: </br>
+`cd /opt/lampp/` </br>
+`sudo ./manager-linux-x64.run` or `sudo ./manager-linux.run` (for 32 bit systems)
+
 
 #### 2) Preparing Slim PHP API to be executed
  - Clone the repo into yout *htdocs* XAMPP server directory: </br>
@@ -44,7 +54,14 @@ https://sourceforge.net/projects/xampp/files/XAMPP%20Linux/7.1.1/
 `cd GDALab-Practice-API/` </br>
 `composer install`
 
-...
+
+#### 3) Creating the initial database with required static registers
+Before go to the part of try the API, is neccesary to execute the database script that is included in the *src/resources* directory. It contains the tables structure and some static registers to be able to insert new customers from the API. </br>
+
+Execute the *.sql* script file in phpMyAdmin panel or in console, as you prefer.
+
+----
+
 #### API URLS
 The following list contains the API actions URLs and one example of the JSON values that can be sent, everyone working with POST request method.
 
