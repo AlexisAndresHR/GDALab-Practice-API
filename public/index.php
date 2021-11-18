@@ -9,6 +9,9 @@ require '../src/config/db/connection.php';
 
 $app = new \Slim\App;// Creates new Slim App instance
 
+// ...
+require "../src/middleware.php";
+
 // Loads customers route
 require "../src/routes/customers.php";
 

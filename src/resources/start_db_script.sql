@@ -49,3 +49,25 @@ INSERT INTO regions (description, status) VALUES ("Veracruz", "A");
 INSERT INTO communes (id_reg, description, status) VALUES (1, "Tulancingo", "A");
 INSERT INTO communes (id_reg, description, status) VALUES (1, "Pachuca", "A");
 INSERT INTO communes (id_reg, description, status) VALUES (2, "Tecolutla", "A");
+
+
+CREATE TABLE `users` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `first_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `last_name` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `password` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  `updated_at` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+INSERT INTO `users` (`id`, `first_name`, `last_name`, `email`, `password`, `created_at`, `updated_at`) VALUES
+(1, 'Alexis', 'HR', 'alexis@mail.com', '$2y$07$BCryptRequires22Chrcte/VlQH0piJtjXl.0t1XkA8pw9dMXTpOq', '2021-11-18 00:00:00', '2021-11-18 00:00:00');
+
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `users_email_unique` (`email`);
+
+ALTER TABLE `users`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+

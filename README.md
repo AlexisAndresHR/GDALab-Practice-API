@@ -65,9 +65,20 @@ Execute the *.sql* script file in phpMyAdmin panel or in console, as you prefer.
 #### API URLS
 The following list contains the API actions URLs and one example of the JSON values that can be sent, everyone working with POST request method.
 
+ - **Login to API** </br>
+http://localhost/GDALab-Practice-API/public/login </br>
+Request example: </br>
+*{
+    "email": "alexis@mail.com",
+    "password": "rasmuslerdorf"
+}*
+
+NOTE: This URL will return a JWT (JSON Web Token), which is required to enter the rest of URLs so this one is the first step (authentication).
+
  - **Register Customer:** </br>
 http://localhost/GDALab-Practice-API/public/customers/register </br>
 Request example: </br>
+ → Add HTTP header "Authorization" with JWT returned in */login* as value. In request body: </br>
 *{
     "dni": "INE-1234567890",
     "id_reg": 1,
@@ -82,6 +93,7 @@ Request example: </br>
  - **Search Customer:** </br>
 http://localhost/GDALab-Practice-API/public/customers/search </br>
 Request example: </br>
+ → Add HTTP header "Authorization" with JWT returned in */login* as value. In request body: </br>
 *{
     "dni": "INE-1234567890",
     "email": "alexis@mail.com"
@@ -92,6 +104,7 @@ NOTE: The search function can work with just one parameter also (dni or email).
  - **Delete Customer:** </br>
 http://localhost/GDALab-Practice-API/public/customers/delete </br>
 Request example: </br>
+ → Add HTTP header "Authorization" with JWT returned in */login* as value. In request body: </br>
 *{
     "dni": "INE-1234567890",
     "email": "alexis@mail.com"

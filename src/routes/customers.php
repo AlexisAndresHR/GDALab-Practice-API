@@ -2,15 +2,87 @@
 // Brings the Request and Response classes to use its in the code
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
+use \Firebase\JWT\JWT;
 
 
 $app = new \Slim\App;// Creates new Slim App instance
+
+/**
+ * Route to get the JWT that gives access to the rest of API functions
+ */
+$app->post('/login', function (Request $request, Response $response) {
+
+    $dbObj = new apiDB();// Creates an instance of DB class
+    $dbObj = $dbObj->connectToDB();// Makes the connection through function
+
+    $reqValues = $request->getParsedBody();
+
+    $stringQuery = "SELECT * FROM users WHERE email= :email";// Database query with binding param
+    $query = $dbObj->prepare($stringQuery);
+    $query->bindParam("email", $reqValues['email']);// Sets the binding param 'email'
+    $query->execute();// Executes the prepared quiery on db
+    $user = $query->fetchObject();
+ 
+    // Validates if the user exist (is registered)
+    if(!$user) {
+        return $this->response->withJson(['error' => true, 'message' => 'User is not registered in the database.']);
+    }
+    // Validates the password (send vs registered)
+    if (!password_verify($reqValues['password'],$user->password)) {
+        return $this->response->withJson(['error' => true, 'message' => 'Incorrect password, verify your credentials.']);
+    }
+
+    $settings = $this->get('settings');// To use the settings defined values (JWT)
+    $key = $settings['jwt']['secret'];// Obtains the secret JWT phrase
+    $key = 'secret_key_to-ALEXIS-practice_api';// proof...
+
+    $payload = array(
+        "iss"     => "http://gdalab-alexis-api.com",
+        "iat"     => time(),
+        "exp"     => time() + (3600 * 24 * 15),
+        "context" => [
+            "user" => [
+                "user_login" => $user->id,
+                "user_id"    => $user->email
+            ]
+        ]
+    );
+
+    try {
+        $token = JWT::encode($payload, $key);// Encodes (builds) the new JSON Web Token for user
+    }
+    catch (Exception $e) {
+        echo json_encode($e);
+    }
+    
+    return $this->response->withJson(['token' => $token]);// Retirns the token value to API authenticated user
+ 
+});
+
 
 /**
  * To register a new Customer
  * -> POST method
  */
 $app->post('/customers/register', function(Request $request, Response $response){
+
+    $jwt = $request->getHeaders();// Obtains the data that HTTP headers contain
+    
+    $settings = $this->get('settings');// To use the settings defined values (JWT)
+    $key = $settings['jwt']['secret'];// Obtains the secret JWT phrase
+    $key = 'secret_key_to-ALEXIS-practice_api';// proof...
+
+    try {
+        $decodedToken = JWT::decode($jwt['HTTP_AUTHORIZATION'][0], $key, array('HS256'));// Decodes the received token to verify it
+    }
+    catch (Exception $e) {
+        echo json_encode($e->getMessage());
+    }
+
+    if (!isset($decodedToken)) {// If the JWT is not propertly decoded, will stop the function exec
+        die();
+    }
+
     // Puts into variables the data received in request body
     $dni = $request->getParam('dni');
     $idReg = $request->getParam('id_reg');
@@ -71,6 +143,7 @@ $app->post('/customers/register', function(Request $request, Response $response)
         http_response_code(500);// Returns HTTP 500 error and stops the execution...
         die('Error: Register process failed. Please report it to Admin.');// ... showing this message
     }
+
 });
 
 
@@ -79,6 +152,24 @@ $app->post('/customers/register', function(Request $request, Response $response)
  * -> POST method
  */
 $app->post('/customers/search', function(Request $request, Response $response){
+
+    $jwt = $request->getHeaders();// Obtains the data that HTTP headers contain
+    
+    $settings = $this->get('settings');// To use the settings defined values (JWT)
+    $key = $settings['jwt']['secret'];// Obtains the secret JWT phrase
+    $key = 'secret_key_to-ALEXIS-practice_api';// proof...
+
+    try {
+        $decodedToken = JWT::decode($jwt['HTTP_AUTHORIZATION'][0], $key, array('HS256'));// Decodes the received token to verify it
+    }
+    catch (Exception $e) {
+        echo json_encode($e->getMessage());
+    }
+
+    if (!isset($decodedToken)) {// If the JWT is not propertly decoded, will stop the function exec
+        die();
+    }
+    
     // Puts into variables the data received in request body
     $dni = $request->getParam('dni');
     $email = $request->getParam('email');
@@ -120,8 +211,8 @@ $app->post('/customers/search', function(Request $request, Response $response){
         $result->execute();// Executes the select query on the database
         if ($result->rowCount() > 0){
             $customer = $result->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
-            echo json_encode($customer);// Returns the requested data
-            echo json_encode(array("success" => "true"));
+            echo json_encode(["data" => $customer,
+                    "success" => "true"]);// Returns the requested data
         }
         else {
             echo json_encode(array("message" => "No customer found.", "success" => "false"));
@@ -136,6 +227,7 @@ $app->post('/customers/search', function(Request $request, Response $response){
         http_response_code(500);// Returns HTTP 500 error and stops the execution...
         die('Error: Register process failed. Please report it to Admin.');// ... showing this message
     }
+
 });
 
 
@@ -144,6 +236,24 @@ $app->post('/customers/search', function(Request $request, Response $response){
  * -> POST method
  */
 $app->post('/customers/delete', function(Request $request, Response $response){
+
+    $jwt = $request->getHeaders();// Obtains the data that HTTP headers contain
+    
+    $settings = $this->get('settings');// To use the settings defined values (JWT)
+    $key = $settings['jwt']['secret'];// Obtains the secret JWT phrase
+    $key = 'secret_key_to-ALEXIS-practice_api';// proof...
+
+    try {
+        $decodedToken = JWT::decode($jwt['HTTP_AUTHORIZATION'][0], $key, array('HS256'));// Decodes the received token to verify it
+    }
+    catch (Exception $e) {
+        echo json_encode($e->getMessage());
+    }
+
+    if (!isset($decodedToken)) {// If the JWT is not propertly decoded, will stop the function exec
+        die();
+    }
+    
     // Puts into variables the data received in request body
     $dni = $request->getParam('dni');
     $email = $request->getParam('email');
@@ -226,4 +336,5 @@ $app->post('/customers/delete', function(Request $request, Response $response){
         http_response_code(500);// Returns HTTP 500 error and stops the execution...
         die('Error: Register process failed. Please report it to Admin.');// ... showing this message
     }
+
 });
