@@ -165,3 +165,92 @@ $app->post('/customers/search', function(Request $request, Response $response){
     }
 });
 
+
+/**
+ * To logically remove/delete a Customer from database
+ * -> POST method
+ */
+$app->post('/customers/delete', function(Request $request, Response $response){
+    // Puts into variables the data received in request body
+    $dni = $request->getParam('dni');
+    $email = $request->getParam('email');
+    
+    try {
+        $dbObj = new apiDB();// Creates an instance of DB class
+        $dbObj = $dbObj->connectToDB();// Makes the connection through function
+
+        $validationQuery = "SELECT status FROM customers ";
+        $selectQuery = "UPDATE customers SET status = 'trash' ";
+        $result = "";// Declares the var outside the conditionals to can access it later
+        $validationResult = "";// ... (same purpose that line before)
+
+        if ($dni != "" && $email != ""){
+            $validationQuery .= " WHERE dni = :dni AND email = :email;";
+            $validationResult = $dbObj->prepare($validationQuery);// Prepares the query string to be executed
+            $validationResult->bindParam(':dni', $dni);
+            $validationResult->bindParam(':email', $email);// bindParam function validates user input (API request in this case) before sending it to the DB.
+
+            $selectQuery .= " WHERE dni = :dni AND email = :email AND (status = 'A' OR status = 'I');";// Before execute the query on database, prepare statement by binding parameters (:param)
+            $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
+            $result->bindParam(':dni', $dni);
+            $result->bindParam(':email', $email);// bindParam function validates user input (API request in this case) before sending it to the DB.
+        }
+        else if ($dni != "" && $email == ""){
+            $validationQuery .= " WHERE dni = :dni;";
+            $validationResult = $dbObj->prepare($validationQuery);// Prepares the query string to be executed
+            $validationResult->bindParam(':dni', $dni);// bindParam function validates user input (API request in this case) before sending it to the DB.
+
+            $selectQuery .= " WHERE dni = :dni AND (status = 'A' OR status = 'I');";// Before execute the query on database, prepare statement by binding parameters (:param)
+            $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
+            $result->bindParam(':dni', $dni);// bindParam function validates user input (API request in this case) before sending it to the DB.
+        }
+        else if ($email != "" && $dni == ""){
+            $validationQuery .= " WHERE email = :email;";
+            $validationResult = $dbObj->prepare($validationQuery);// Prepares the query string to be executed
+            $validationResult->bindParam(':email', $email);// bindParam function validates user input (API request in this case) before sending it to the DB.
+
+            $selectQuery .= " WHERE email = :email AND (status = 'A' OR status = 'I');";// Before execute the query on database, prepare statement by binding parameters (:param)
+            $result = $dbObj->prepare($selectQuery);// Prepares the query string to be executed
+            $result->bindParam(':email', $email);// bindParam function validates user input (API request in this case) before sending it to the DB.
+        }
+        else {
+            echo json_encode(array("message" => "Not enough params to operation delete Customer. DNI or email required.", "success" => "false"));
+        }
+
+
+        $validationResult->execute();// Executes the select validation query to check the data
+        if ($validationResult->rowCount() > 0){
+            $customerData = $validationResult->fetchAll(PDO::FETCH_OBJ);// Fetch fields and values from obtained resulset
+            $obj = json_encode($customerData[0]);
+            $obtainedData = json_decode($obj);// To access the JSON object values as properties
+
+            /**
+             * Validates if the Customer is already trashed
+             * If the status of customer found is different to trash, will be deleted
+             */
+            if ($obtainedData->status != "trash"){
+                // Executes the select query on the database
+                if ($result->execute())
+                    echo json_encode(array("message" => "Customer successfully deleted.", "success" => "true"));
+                else 
+                    echo json_encode(array("message" => "Delete operation cannot be completed.", "success" => "false"));
+            }
+            else {
+                echo json_encode(array("message" => "Register doesn't exist.", "success" => "false"));
+            }
+        }
+        else {
+            echo json_encode(array("message" => "No customer found.", "success" => "false"));
+        }
+
+        // Resets the variables and close the connection to database
+        $validationResult = null;
+        $result = null;
+        $dbObj = null;
+    }
+    catch(PDOException $err){
+        error_log('Register Customer PDOException - ' . $err->getMessage(), 0);// Sends the error message to the server log file
+        http_response_code(500);// Returns HTTP 500 error and stops the execution...
+        die('Error: Register process failed. Please report it to Admin.');// ... showing this message
+    }
+});
