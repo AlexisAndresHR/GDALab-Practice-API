@@ -51,9 +51,10 @@ $app->post('/customers/register', function(Request $request, Response $response)
             $result->bindParam(':address', $address);
             $result->bindParam(':date_reg', $dateReg);
 
-            $result->execute();// Executes the validated query on the database;
-
-            echo json_encode("The customer has been saved.");
+            // Executes the validated query on the database;
+            if ($result->execute()){
+                echo json_encode(array("message" => "The customer has been saved.", "success" => "true"));
+            }
 
             // Resets the variables and close the connection to database
             $validationComReg = null;
@@ -62,7 +63,7 @@ $app->post('/customers/register', function(Request $request, Response $response)
 
         }
         else {
-            echo "The given id_reg and id_com values don't match with some registered Region and Commune.";
+            echo json_encode(array("message" => "The given id_reg and id_com values don't match with some registered Region and Commune.", "success" => "false"));
         }
     }
     catch(PDOException $err){
